@@ -346,7 +346,9 @@ static UIImage *rotateIfNeeded(UIImage *src);
         mf.mailComposeDelegate = self;
         [self presentViewController:mf animated:YES completion:NULL];
     } else {
-        NSLog(@"send to JIRA Mobile connect..");
+        if (self.callback) {
+            self.callback(screenshot,log);
+        }
     }
 }
 
