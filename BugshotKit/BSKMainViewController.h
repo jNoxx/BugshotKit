@@ -23,6 +23,6 @@
 @property (nonatomic, weak) id<BSKMainViewControllerDelegate> delegate;
 
 @property (strong, nonatomic) NSString *customCallBackTitle;
-@property (nonatomic, copy) BugShotCustomActionCallBack callback;
+@property (nonatomic, weak) BugShotCustomActionCallBack callback;
 
 @end

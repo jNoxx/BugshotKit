@@ -346,6 +346,7 @@ static UIImage *rotateIfNeeded(UIImage *src);
         mf.mailComposeDelegate = self;
         [self presentViewController:mf animated:YES completion:NULL];
     } else {
+        NSLog(@"self.callback: %@", self.callback);
         if (self.callback) {
             self.callback(screenshot,log);
         }

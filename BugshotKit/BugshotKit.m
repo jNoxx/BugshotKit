@@ -50,7 +50,7 @@ UIImage *BSKImageWithDrawing(CGSize size, void (^drawingCommands)())
 
 @property (nonatomic) BSKInvocationGestureMask invocationGestures;
 @property (nonatomic) NSUInteger invocationGesturesTouchCount;
-@property (nonatomic, copy) BugShotCustomActionCallBack callback;
+@property (nonatomic, weak) BugShotCustomActionCallBack callback;
 
 @end
 
