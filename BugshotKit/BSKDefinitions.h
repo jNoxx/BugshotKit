@@ -12,5 +12,5 @@ typedef enum : NSUInteger {
     BSKActionTypeCustom = 2
 } BSKActionType;
 
-typedef void(^BugShotCustomActionCallBack)(UIImage *img, NSString *log);
+typedef void(^BugShotCustomActionCallBack)(UIImage *img, NSString *log, NSDictionary *userDict);
 

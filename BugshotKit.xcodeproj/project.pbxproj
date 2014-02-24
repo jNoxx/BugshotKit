@@ -103,10 +103,10 @@
 		4C15DA35188F48E400767C78 /* BugshotKit */ = {
 			isa = PBXGroup;
 			children = (
+				6A2868EE18BB3EB200A9DAFF /* BSKDefinitions.h */,
 				4C15DA38188F48E400767C78 /* BugshotKit.h */,
 				4C15DA39188F48E400767C78 /* BugshotKit.m */,
 				4C15DA40188F491000767C78 /* BSKAnnotationArrowView.h */,
-				6A2868EE18BB3EB200A9DAFF /* BSKDefinitions.h */,
 				4C15DA41188F491000767C78 /* BSKAnnotationArrowView.m */,
 				4C15DA42188F491000767C78 /* BSKAnnotationBlurView.h */,
 				4C15DA43188F491000767C78 /* BSKAnnotationBlurView.m */,
