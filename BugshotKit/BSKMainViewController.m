@@ -34,7 +34,22 @@ static UIImage *rotateIfNeeded(UIImage *src);
     if ( (self = [super initWithStyle:UITableViewStyleGrouped]) ) {
         [BugshotKit.sharedManager addObserver:self forKeyPath:@"annotatedImage" options:0 context:NULL];
         [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateLiveLog:) name:BSKNewLogMessageNotification object:nil];
+        
+        self.title = @"Bugshot";
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancelButtonTapped:)];
+        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
+    }
+    return self;
+}
 
+- (instancetype)initWithCallback:(BugShotCustomActionCallBack)callback
+{
+    if ( (self = [super initWithStyle:UITableViewStyleGrouped]) ) {
+        self.callback = callback;
+        self.customCallBackTitle = @"JIRA Connect";
+        [BugshotKit.sharedManager addObserver:self forKeyPath:@"annotatedImage" options:0 context:NULL];
+        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateLiveLog:) name:BSKNewLogMessageNotification object:nil];
+        
         self.title = @"Bugshot";
         self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancelButtonTapped:)];
         self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil];
@@ -51,7 +66,7 @@ static UIImage *rotateIfNeeded(UIImage *src);
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
+    
     CGSize chevronSize = CGSizeMake(15, 30);
     UIImage *chevronImage = BSKImageWithDrawing(chevronSize, ^{
         CGRect chevronBounds = CGRectMake(0, 0, chevronSize.width, chevronSize.height);
@@ -65,12 +80,12 @@ static UIImage *rotateIfNeeded(UIImage *src);
         [BugshotKit.sharedManager.toggleOffColor setStroke];
         [path stroke];
     });
-
+    
     UIImage *screenshotImage = (BugshotKit.sharedManager.annotatedImage ?: BugshotKit.sharedManager.snapshotImage);
-
+    
     CGFloat maxHeaderHeight =
-        UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad ? (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? 570 : 480) :
-        UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? (UIScreen.mainScreen.bounds.size.height < 568 ? 300 : 340) : 220
+    UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad ? (UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? 570 : 480) :
+    UIInterfaceOrientationIsPortrait(self.interfaceOrientation) ? (UIScreen.mainScreen.bounds.size.height < 568 ? 300 : 340) : 220
     ;
     UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, maxHeaderHeight)];
     
@@ -104,7 +119,7 @@ static UIImage *rotateIfNeeded(UIImage *src);
     self.includeScreenshotToggle.translatesAutoresizingMaskIntoConstraints = NO;
     self.includeScreenshotToggle.accessibilityLabel = @"Include screenshot";
     [screenshotContainer addSubview:self.includeScreenshotToggle];
-
+    
     self.includeLogToggle = [[BSKToggleButton alloc] initWithFrame:CGRectMake(0, 0, toggleWidth, toggleWidth)];
     self.includeLogToggle.on = YES;
     [self.includeLogToggle addTarget:self action:@selector(includeLogToggled:) forControlEvents:UIControlEventValueChanged];
@@ -120,7 +135,7 @@ static UIImage *rotateIfNeeded(UIImage *src);
     self.screenshotView.layer.borderWidth = 1.0f;
     self.screenshotView.accessibilityLabel = @"Annotate screenshot";
     [screenshotContainer addSubview:self.screenshotView];
-
+    
     self.consoleView = [UIButton buttonWithType:UIButtonTypeCustom];
     [self.consoleView addTarget:self action:@selector(openConsoleViewer:) forControlEvents:UIControlEventTouchUpInside];
     self.consoleView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -134,66 +149,66 @@ static UIImage *rotateIfNeeded(UIImage *src);
     self.screenshotAccessoryView.translatesAutoresizingMaskIntoConstraints = NO;
     self.screenshotAccessoryView.isAccessibilityElement = NO;
     [screenshotContainer addSubview:self.screenshotAccessoryView];
-
+    
     self.consoleAccessoryView = [[UIImageView alloc] initWithImage:chevronImage];
     self.consoleAccessoryView.translatesAutoresizingMaskIntoConstraints = NO;
     self.consoleAccessoryView.isAccessibilityElement = NO;
     [consoleContainer addSubview:self.consoleAccessoryView];
-
+    
     // Make both images match the screenshot's aspect ratio (and lock its ratio)
     CGSize imageSize = screenshotImage.size;
     CGFloat imageAspect = imageSize.width / imageSize.height;
     [screenshotContainer addConstraint:[NSLayoutConstraint
-        constraintWithItem:self.screenshotView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.screenshotView attribute:NSLayoutAttributeHeight multiplier:imageAspect constant:0
-    ]];
+                                        constraintWithItem:self.screenshotView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.screenshotView attribute:NSLayoutAttributeHeight multiplier:imageAspect constant:0
+                                        ]];
     [consoleContainer addConstraint:[NSLayoutConstraint
-        constraintWithItem:self.consoleView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.consoleView attribute:NSLayoutAttributeHeight multiplier:imageAspect constant:0
-    ]];
+                                     constraintWithItem:self.consoleView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:self.consoleView attribute:NSLayoutAttributeHeight multiplier:imageAspect constant:0
+                                     ]];
     
     void (^layoutScreenshotUnit)(UIView *container, NSDictionary *views) = ^(UIView *container, NSDictionary *views){
         NSDictionary *metrics = @{
-            @"aw" : @(chevronSize.width), @"ah" : @(chevronSize.height), @"apad" : @(chevronSize.width + 5.0f),
-            @"lfont" : @( ((UILabel *)views[@"label"]).font.pointSize ),
-            @"padImageHeight" : @(384)
-        };
-    
+                                  @"aw" : @(chevronSize.width), @"ah" : @(chevronSize.height), @"apad" : @(chevronSize.width + 5.0f),
+                                  @"lfont" : @( ((UILabel *)views[@"label"]).font.pointSize ),
+                                  @"padImageHeight" : @(384)
+                                  };
+        
         [container addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|-15-[label(>=lfont)]-5-[image]-15-[toggle]" options:0 metrics:metrics views:views]];
         [container addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"[accessory(==aw)]|" options:0 metrics:metrics views:views]];
         [container addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[accessory(==ah)]" options:0 metrics:metrics views:views]];
         [container addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|[label]|" options:0 metrics:nil views:views]];
         [container addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"|-apad-[image]-apad-|" options:0 metrics:metrics views:views]];
         [container addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[toggle]-15-|" options:0 metrics:nil views:views]];
-
+        
         // horizontally center toggle
         [container addConstraint:[NSLayoutConstraint
-            constraintWithItem:views[@"toggle"] attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:container attribute:NSLayoutAttributeCenterX multiplier:1 constant:0
-        ]];
+                                  constraintWithItem:views[@"toggle"] attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:container attribute:NSLayoutAttributeCenterX multiplier:1 constant:0
+                                  ]];
         
         // vertically center accessory to image
         [container addConstraint:[NSLayoutConstraint
-            constraintWithItem:views[@"accessory"] attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:views[@"image"] attribute:NSLayoutAttributeCenterY multiplier:1 constant:0
-        ]];
+                                  constraintWithItem:views[@"accessory"] attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:views[@"image"] attribute:NSLayoutAttributeCenterY multiplier:1 constant:0
+                                  ]];
         
         // toggle is always square
         [container addConstraint:[NSLayoutConstraint
-            constraintWithItem:views[@"toggle"] attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:views[@"toggle"] attribute:NSLayoutAttributeWidth multiplier:1 constant:0
-        ]];
+                                  constraintWithItem:views[@"toggle"] attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:views[@"toggle"] attribute:NSLayoutAttributeWidth multiplier:1 constant:0
+                                  ]];
     };
     
     layoutScreenshotUnit(screenshotContainer, @{
-        @"label" : self.screenshotLabel,
-        @"image" : self.screenshotView,
-        @"accessory" : self.screenshotAccessoryView,
-        @"toggle" : self.includeScreenshotToggle
-    });
-
+                                                @"label" : self.screenshotLabel,
+                                                @"image" : self.screenshotView,
+                                                @"accessory" : self.screenshotAccessoryView,
+                                                @"toggle" : self.includeScreenshotToggle
+                                                });
+    
     layoutScreenshotUnit(consoleContainer, @{
-        @"label" : self.consoleLabel,
-        @"image" : self.consoleView,
-        @"accessory" : self.consoleAccessoryView,
-        @"toggle" : self.includeLogToggle
-    });
-
+                                             @"label" : self.consoleLabel,
+                                             @"image" : self.consoleView,
+                                             @"accessory" : self.consoleAccessoryView,
+                                             @"toggle" : self.includeLogToggle
+                                             });
+    
     [headerView addSubview:screenshotContainer];
     [headerView addSubview:consoleContainer];
     
@@ -202,19 +217,19 @@ static UIImage *rotateIfNeeded(UIImage *src);
     [headerView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[consoleContainer]|" options:0 metrics:nil views:views]];
     
     [headerView addConstraint:[NSLayoutConstraint
-        constraintWithItem:screenshotContainer attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationLessThanOrEqual toItem:headerView attribute:NSLayoutAttributeCenterX multiplier:1 constant:0
-    ]];
+                               constraintWithItem:screenshotContainer attribute:NSLayoutAttributeRight relatedBy:NSLayoutRelationLessThanOrEqual toItem:headerView attribute:NSLayoutAttributeCenterX multiplier:1 constant:0
+                               ]];
     [headerView addConstraint:[NSLayoutConstraint
-        constraintWithItem:consoleContainer attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationLessThanOrEqual toItem:headerView attribute:NSLayoutAttributeCenterX multiplier:1 constant:0
-    ]];
-
+                               constraintWithItem:consoleContainer attribute:NSLayoutAttributeLeft relatedBy:NSLayoutRelationLessThanOrEqual toItem:headerView attribute:NSLayoutAttributeCenterX multiplier:1 constant:0
+                               ]];
+    
     [headerView addConstraint:[NSLayoutConstraint
-        constraintWithItem:screenshotContainer attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:consoleContainer attribute:NSLayoutAttributeWidth multiplier:1 constant:0
-    ]];
-
+                               constraintWithItem:screenshotContainer attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:consoleContainer attribute:NSLayoutAttributeWidth multiplier:1 constant:0
+                               ]];
+    
     [headerView sizeToFit];
     self.tableView.tableHeaderView = headerView;
-
+    
     dispatch_async(dispatch_get_main_queue(), ^{
         [self updateLiveLog:nil];
     });
@@ -289,20 +304,20 @@ static UIImage *rotateIfNeeded(UIImage *src);
     
     NSString *appNameString = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
     NSString *appVersionString = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"];
-
+    
     size_t size;
-    sysctlbyname("hw.machine", NULL, &size, NULL, 0); 
+    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
     char *name = malloc(size);
     sysctlbyname("hw.machine", name, &size, NULL, 0);
     NSString *modelIdentifier = [NSString stringWithCString:name encoding:NSUTF8StringEncoding];
     free(name);
-
+    
     NSDictionary *userInfo = @{
-        @"appName" : appNameString,
-        @"appVersion" : appVersionString,
-        @"systemVersion" : UIDevice.currentDevice.systemVersion,
-        @"deviceModel" : modelIdentifier,
-    };
+                               @"appName" : appNameString,
+                               @"appVersion" : appVersionString,
+                               @"systemVersion" : UIDevice.currentDevice.systemVersion,
+                               @"deviceModel" : modelIdentifier,
+                               };
     
     NSDictionary *extraUserInfo = BugshotKit.sharedManager.extraInfoBlock ? BugshotKit.sharedManager.extraInfoBlock() : nil;
     if (extraUserInfo) {
@@ -312,23 +327,27 @@ static UIImage *rotateIfNeeded(UIImage *src);
     
     NSData *userInfoJSON = [NSJSONSerialization dataWithJSONObject:userInfo options:NSJSONWritingPrettyPrinted error:NULL];
     
-    MFMailComposeViewController *mf = [MFMailComposeViewController canSendMail] ? [[MFMailComposeViewController alloc] init] : nil;
-    if (! mf) {
-        NSString *msg = [NSString stringWithFormat:@"Mail is not configured on your %@.", UIDevice.currentDevice.localizedModel];
-        [[[UIAlertView alloc] initWithTitle:@"Cannot Send Mail" message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
-        return;
+    if (!self.customCallBackTitle) {
+        MFMailComposeViewController *mf = [MFMailComposeViewController canSendMail] ? [[MFMailComposeViewController alloc] init] : nil;
+        if (! mf) {
+            NSString *msg = [NSString stringWithFormat:@"Mail is not configured on your %@.", UIDevice.currentDevice.localizedModel];
+            [[[UIAlertView alloc] initWithTitle:@"Cannot Send Mail" message:msg delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
+            return;
+        }
+        
+        mf.toRecipients = [BugshotKit.sharedManager.destinationEmailAddress componentsSeparatedByString:@","];
+        mf.subject = BugshotKit.sharedManager.emailSubjectBlock ? BugshotKit.sharedManager.emailSubjectBlock(userInfo) : [NSString stringWithFormat:@"%@ %@ Feedback", appNameString, appVersionString];
+        [mf setMessageBody:BugshotKit.sharedManager.emailBodyBlock ? BugshotKit.sharedManager.emailBodyBlock(userInfo) : nil isHTML:NO];
+        
+        if (screenshot) [mf addAttachmentData:UIImagePNGRepresentation(rotateIfNeeded(screenshot)) mimeType:@"image/png" fileName:@"screenshot.png"];
+        if (log) [mf addAttachmentData:[log dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"log.txt"];
+        if (userInfoJSON) [mf addAttachmentData:userInfoJSON mimeType:@"application/json" fileName:@"info.json"];
+        
+        mf.mailComposeDelegate = self;
+        [self presentViewController:mf animated:YES completion:NULL];
+    } else {
+        NSLog(@"send to JIRA Mobile connect..");
     }
-    
-    mf.toRecipients = [BugshotKit.sharedManager.destinationEmailAddress componentsSeparatedByString:@","];
-    mf.subject = BugshotKit.sharedManager.emailSubjectBlock ? BugshotKit.sharedManager.emailSubjectBlock(userInfo) : [NSString stringWithFormat:@"%@ %@ Feedback", appNameString, appVersionString];
-    [mf setMessageBody:BugshotKit.sharedManager.emailBodyBlock ? BugshotKit.sharedManager.emailBodyBlock(userInfo) : nil isHTML:NO];
-
-    if (screenshot) [mf addAttachmentData:UIImagePNGRepresentation(rotateIfNeeded(screenshot)) mimeType:@"image/png" fileName:@"screenshot.png"];
-    if (log) [mf addAttachmentData:[log dataUsingEncoding:NSUTF8StringEncoding] mimeType:@"text/plain" fileName:@"log.txt"];
-    if (userInfoJSON) [mf addAttachmentData:userInfoJSON mimeType:@"application/json" fileName:@"info.json"];
-
-    mf.mailComposeDelegate = self;
-    [self presentViewController:mf animated:YES completion:NULL];
 }
 
 - (void)mailComposeController:(MFMailComposeViewController *)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError *)error
@@ -349,8 +368,8 @@ static UIImage *rotateIfNeeded(UIImage *src);
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.textLabel.textAlignment = NSTextAlignmentCenter;
     cell.textLabel.textColor = BugshotKit.sharedManager.annotationFillColor;
-    cell.textLabel.text = @"Compose Email…";
-
+    cell.textLabel.text = self.customCallBackTitle ? self.customCallBackTitle:@"Compose Email…";
+    
     return cell;
 }
 
@@ -368,6 +387,12 @@ static UIImage *rotateIfNeeded(UIImage *src);
     [BugshotKit.sharedManager consoleImageWithSize:self.consoleView.bounds.size fontSize:7 emptyBottomLine:NO withCompletion:^(UIImage *image) {
         [self.consoleView setBackgroundImage:image forState:UIControlStateNormal];
     }];
+}
+
+#pragma mark - jNoxx Override
+- (void)setCustomCallBackTitle:(NSString *)customCallBackTitle
+{
+    _customCallBackTitle = customCallBackTitle;
 }
 
 @end

@@ -58,6 +58,7 @@
 		4C15DA55188F491000767C78 /* BSKWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BSKWindow.m; sourceTree = "<group>"; };
 		4C15DA56188F491000767C78 /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		4C15DA57188F491000767C78 /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+ImageEffects.m"; sourceTree = "<group>"; };
+		6A2868EE18BB3EB200A9DAFF /* BSKDefinitions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BSKDefinitions.h; sourceTree = "<group>"; };
 		A9AF1AA218995AA90025693B /* MABGTimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MABGTimer.h; sourceTree = "<group>"; };
 		A9AF1AA318995AA90025693B /* MABGTimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MABGTimer.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -105,6 +106,7 @@
 				4C15DA38188F48E400767C78 /* BugshotKit.h */,
 				4C15DA39188F48E400767C78 /* BugshotKit.m */,
 				4C15DA40188F491000767C78 /* BSKAnnotationArrowView.h */,
+				6A2868EE18BB3EB200A9DAFF /* BSKDefinitions.h */,
 				4C15DA41188F491000767C78 /* BSKAnnotationArrowView.m */,
 				4C15DA42188F491000767C78 /* BSKAnnotationBlurView.h */,
 				4C15DA43188F491000767C78 /* BSKAnnotationBlurView.m */,

@@ -5,13 +5,13 @@
 #import <UIKit/UIKit.h>
 #import "BSKMainViewController.h"
 #import "BSKWindow.h"
+#import "BSKDefinitions.h"
 
 #if ! DEBUG
 #warning BugshotKit is being included in a non-debug build.
 #endif
 
 extern NSString * const BSKNewLogMessageNotification;
-
 
 typedef enum : NSUInteger {
     BSKInvocationGestureNone        = 0,
@@ -34,6 +34,7 @@ typedef enum : NSUInteger {
 
 /* You can also always show it manually */
 + (void)show;
++ (void)showWithCallback:(BugShotCustomActionCallBack)callback;
 
 + (instancetype)sharedManager;
 - (void)clearLog;

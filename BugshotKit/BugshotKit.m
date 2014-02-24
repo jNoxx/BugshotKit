@@ -50,6 +50,7 @@ UIImage *BSKImageWithDrawing(CGSize size, void (^drawingCommands)())
 
 @property (nonatomic) BSKInvocationGestureMask invocationGestures;
 @property (nonatomic) NSUInteger invocationGesturesTouchCount;
+@property (nonatomic, copy) BugShotCustomActionCallBack callback;
 
 @end
 
@@ -80,6 +81,18 @@ UIImage *BSKImageWithDrawing(CGSize size, void (^drawingCommands)())
 }
 
 + (void)show
+{
+    [BugshotKit.sharedManager ensureWindow];
+    [BugshotKit.sharedManager handleOpenGesture:nil];
+}
+
++ (void)showWithCallback:(BugShotCustomActionCallBack)callback {
+    [BugshotKit sharedManager].callback = callback;
+    [BugshotKit.sharedManager ensureWindow];
+    [BugshotKit.sharedManager handleOpenGesture:nil];
+}
+
++ (void)showWithCustomActionTitle:(NSString *)customTitle andCallback:(BugShotCustomActionCallBack)callback
 {
     [BugshotKit.sharedManager ensureWindow];
     [BugshotKit.sharedManager handleOpenGesture:nil];
@@ -408,12 +421,24 @@ UIImage *BSKImageWithDrawing(CGSize size, void (^drawingCommands)())
     UIViewController *presentingViewController = self.window.rootViewController;
     while (presentingViewController.presentedViewController) presentingViewController = presentingViewController.presentedViewController;
     
-    BSKMainViewController *mvc = [[BSKMainViewController alloc] init];
+    BSKMainViewController *mvc = [self mvc];
+    mvc.callback = [BugshotKit sharedManager].callback;
     mvc.delegate = self;
     BSKNavigationController *nc = [[BSKNavigationController alloc] initWithRootViewController:mvc lockedToRotation:self.window.rootViewController.interfaceOrientation];
     nc.navigationBar.tintColor = BugshotKit.sharedManager.annotationFillColor;
     
     [presentingViewController presentViewController:nc animated:YES completion:NULL];
+}
+
+- (BSKMainViewController *)mvc
+{
+    BSKMainViewController *mvc = nil;
+    if ([BugshotKit sharedManager].callback) {
+        mvc = [[BSKMainViewController alloc] initWithCallback:[BugshotKit sharedManager].callback];
+    } else {
+        mvc = [[BSKMainViewController alloc] init];
+    }
+    return mvc;
 }
 
 - (void)mainViewControllerDidClose:(BSKMainViewController *)mainViewController
@@ -594,6 +619,5 @@ UIImage *BSKImageWithDrawing(CGSize size, void (^drawingCommands)())
 
     return YES; // expected development/enterprise/ad-hoc entitlements not found
 }
-
 
 @end
